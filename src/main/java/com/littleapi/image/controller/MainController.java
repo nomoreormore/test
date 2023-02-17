@@ -1,5 +1,6 @@
 package com.littleapi.image.controller;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.littleapi.image.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -10,8 +11,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 //1) POST /api/images/ - загрузка массива картинок через один запрос во временную папку локального сервера
 //2) GET /api/images/ - выдача всей мета (EXIF) информации о каждой фотографии,
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/images")
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class MainController {
     private final ImageService imageService;
 
@@ -33,6 +37,18 @@ public class MainController {
                         path -> MvcUriComponentsBuilder.fromMethodName(MainController.class,
                                 "imageInfo", path.getFileName().toString()).build().toUri().toString())
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/detailed")
+    @ResponseBody
+    public List<Resource> detailedInfo() throws IOException {
+        return imageService.loadAll().map(path -> {
+            try {
+                return imageService.loadAsResource(path.toString());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
     }
 
     @GetMapping("/{imageName:.+}")
