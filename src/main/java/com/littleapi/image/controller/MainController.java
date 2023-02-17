@@ -1,5 +1,10 @@
 package com.littleapi.image.controller;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Directory;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.Tag;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.littleapi.image.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +15,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,14 +40,25 @@ public class MainController {
 
     @GetMapping()
     @ResponseBody
-    public List<Resource> detailedInfo() throws IOException {
-        return imageService.loadAll().map(path -> {
+    public List<String> getImages() throws IOException, ImageProcessingException {
+        List<Resource> images = imageService.loadAll().map(path -> {
             try {
                 return imageService.loadAsResource(path.toString());
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
-        }).collect(Collectors.toList());
+        }).toList();
+
+        List<String> imageMeta = new ArrayList<>();
+        for (Resource img : images) {
+            Metadata metadata = ImageMetadataReader.readMetadata(img.getFile());
+            for (Directory directory : metadata.getDirectories()) {
+                for (Tag tag : directory.getTags()) {
+                    imageMeta.add(img.getFilename() + " " + directory.getName() + " " + tag.getTagName() + " " + tag.getDescription());
+                }
+            }
+        }
+        return imageMeta;
     }
 
     @GetMapping("/{imageName:.+}")
