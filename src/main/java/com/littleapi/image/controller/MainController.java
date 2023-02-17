@@ -31,15 +31,7 @@ public class MainController {
         this.imageService = imageService;
     }
 
-    @GetMapping
-    public List<String> getImages() throws IOException {
-        return imageService.loadAll().map(
-                        path -> MvcUriComponentsBuilder.fromMethodName(MainController.class,
-                                "imageInfo", path.getFileName().toString()).build().toUri().toString())
-                .collect(Collectors.toList());
-    }
-
-    @GetMapping("/detailed")
+    @GetMapping()
     @ResponseBody
     public List<Resource> detailedInfo() throws IOException {
         return imageService.loadAll().map(path -> {
