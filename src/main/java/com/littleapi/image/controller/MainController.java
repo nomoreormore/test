@@ -54,7 +54,7 @@ public class MainController {
             Metadata metadata = ImageMetadataReader.readMetadata(img.getFile());
             for (Directory directory : metadata.getDirectories()) {
                 for (Tag tag : directory.getTags()) {
-                    imageMeta.add(img.getFilename() + " " + directory.getName() + " " + tag.getTagName() + " " + tag.getDescription());
+                    if (directory.getName().contains("Exif")) imageMeta.add(img.getFilename() + " " + tag.getTagName() + " " + tag.getDescription());
                 }
             }
         }
